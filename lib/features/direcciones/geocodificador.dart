@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Convierte la posición del pin en una dirección escrita («Cra 43 #84-20, Barranquilla»).
@@ -11,8 +12,9 @@ class Geocodificador {
             baseUrl: 'https://nominatim.openstreetmap.org',
             connectTimeout: const Duration(seconds: 10),
             receiveTimeout: const Duration(seconds: 10),
-            // Nominatim pide identificar la app que consulta.
-            headers: {'User-Agent': 'NovaTechCliente/1.0 (app de pedidos de NovaTech)'},
+            // Nominatim pide identificar la app que consulta. En el navegador no se puede
+            // cambiar el User-Agent (lo identifica la página que hace la consulta).
+            headers: kIsWeb ? null : {'User-Agent': 'NovaTechCliente/1.0 (app de pedidos de NovaTech)'},
           ),
         );
 

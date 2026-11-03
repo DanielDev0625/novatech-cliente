@@ -332,3 +332,79 @@ class CondicionesPedido {
         plazoDias: json['plazo_entrega_dias'] as int? ?? 2,
       );
 }
+
+/// Posición del transportista y hora estimada (solo mientras el pedido va en ruta).
+class Seguimiento {
+  const Seguimiento({
+    required this.estado,
+    required this.destinoLatitud,
+    required this.destinoLongitud,
+    this.transportistaLatitud,
+    this.transportistaLongitud,
+    this.segundosDesdePosicion,
+    this.parada,
+    this.etaMinutos,
+  });
+
+  final EstadoPedido estado;
+  final double destinoLatitud;
+  final double destinoLongitud;
+  final double? transportistaLatitud;
+  final double? transportistaLongitud;
+
+  /// Hace cuánto llegó la última posición del transportista.
+  final int? segundosDesdePosicion;
+
+  /// Número de parada del pedido en la ruta del transportista.
+  final int? parada;
+  final int? etaMinutos;
+
+  bool get hayTransportista => transportistaLatitud != null && transportistaLongitud != null;
+
+  factory Seguimiento.fromJson(Map<String, dynamic> json) {
+    final pos = json['transportista_posicion'];
+    final posicion = pos is Map ? Map<String, dynamic>.from(pos) : null;
+    return Seguimiento(
+      estado: EstadoPedido.desde(json['estado'] as String?),
+      destinoLatitud: (json['destino_latitud'] as num).toDouble(),
+      destinoLongitud: (json['destino_longitud'] as num).toDouble(),
+      transportistaLatitud: (posicion?['latitud'] as num?)?.toDouble(),
+      transportistaLongitud: (posicion?['longitud'] as num?)?.toDouble(),
+      segundosDesdePosicion: posicion?['segundos_desde_actualizacion'] as int?,
+      parada: json['parada'] as int?,
+      etaMinutos: json['eta_minutos'] as int?,
+    );
+  }
+}
+
+/// Aviso de un cambio de estado de un pedido.
+class Notificacion {
+  const Notificacion({
+    required this.id,
+    required this.pedidoId,
+    required this.codigo,
+    required this.estado,
+    required this.titulo,
+    required this.texto,
+    required this.fecha,
+  });
+
+  /// Crece con el tiempo: sirve para saber cuáles son nuevas.
+  final int id;
+  final int pedidoId;
+  final String codigo;
+  final EstadoPedido estado;
+  final String titulo;
+  final String texto;
+  final DateTime? fecha;
+
+  factory Notificacion.fromJson(Map<String, dynamic> json) => Notificacion(
+        id: json['id'] as int,
+        pedidoId: json['pedido_id'] as int,
+        codigo: json['codigo'] as String,
+        estado: EstadoPedido.desde(json['estado'] as String?),
+        titulo: json['titulo'] as String,
+        texto: json['texto'] as String,
+        fecha: leerFecha(json['fecha']),
+      );
+}

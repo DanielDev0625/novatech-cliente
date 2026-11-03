@@ -33,6 +33,13 @@ class AlmacenSeguro {
     }
   }
 
+  /// Último aviso que vio el cliente [usuarioId] (para contar los nuevos).
+  Future<int> ultimaNotificacionVista(int usuarioId) async =>
+      int.tryParse(await _almacen.read(key: 'notificacion_vista_$usuarioId') ?? '') ?? 0;
+
+  Future<void> guardarNotificacionVista(int usuarioId, int id) =>
+      _almacen.write(key: 'notificacion_vista_$usuarioId', value: '$id');
+
   Future<void> borrarSesion() async {
     await _almacen.delete(key: _kToken);
     await _almacen.delete(key: _kUsuario);

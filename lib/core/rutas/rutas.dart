@@ -8,7 +8,11 @@ import '../../features/carrito/pantalla_carrito.dart';
 import '../../features/carrito/pantalla_confirmar.dart';
 import '../../features/direcciones/pantalla_agregar_direccion.dart';
 import '../../features/direcciones/pantalla_direcciones.dart';
+import '../../features/notificaciones/pantalla_notificaciones.dart';
+import '../../features/notificaciones/vigilante.dart';
 import '../../features/pedidos/pantalla_pedido.dart';
+import '../../features/pedidos/pantalla_qr.dart';
+import '../../features/pedidos/pantalla_seguimiento.dart';
 import '../../features/pedidos/pantalla_pedidos.dart';
 import '../../features/perfil/pantalla_perfil.dart';
 import '../../features/tienda/pantalla_producto.dart';
@@ -67,16 +71,27 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/pedidos/:id',
         builder: (c, e) => PantallaPedido(pedidoId: _id(e)),
       ),
+      GoRoute(
+        path: '/pedidos/:id/seguimiento',
+        builder: (c, e) => PantallaSeguimiento(pedidoId: _id(e)),
+      ),
+      GoRoute(
+        path: '/pedidos/:id/qr',
+        builder: (c, e) => PantallaQr(pedidoId: _id(e)),
+      ),
+      _ruta('/notificaciones', const PantallaNotificaciones()),
 
       // ---- Pestañas del cliente ----
       StatefulShellRoute.indexedStack(
-        builder: (context, estado, shell) => ShellCliente(
-          shell: shell,
-          pestanas: const [
-            Pestana(Icons.storefront_outlined, Icons.storefront, 'Tienda'),
-            Pestana(Icons.inventory_2_outlined, Icons.inventory_2, 'Pedidos'),
-            Pestana(Icons.person_outline, Icons.person, 'Perfil'),
-          ],
+        builder: (context, estado, shell) => VigilanteAvisos(
+          child: ShellCliente(
+            shell: shell,
+            pestanas: const [
+              Pestana(Icons.storefront_outlined, Icons.storefront, 'Tienda'),
+              Pestana(Icons.inventory_2_outlined, Icons.inventory_2, 'Pedidos'),
+              Pestana(Icons.person_outline, Icons.person, 'Perfil'),
+            ],
+          ),
         ),
         branches: [
           StatefulShellBranch(routes: [_ruta('/tienda', const PantallaTienda())]),

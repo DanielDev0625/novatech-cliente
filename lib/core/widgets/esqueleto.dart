@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -65,6 +66,7 @@ class Esqueleto extends StatelessWidget {
     this.alRecargar,
     this.accionInferior,
     this.alTocarTitulo,
+    this.acciones,
   });
 
   final String titulo;
@@ -76,6 +78,9 @@ class Esqueleto extends StatelessWidget {
   final Widget? accionInferior;
 
   final VoidCallback? alTocarTitulo;
+
+  /// Botones a la derecha del encabezado (p. ej. la campana).
+  final List<Widget>? acciones;
 
   @override
   Widget build(BuildContext context) {
@@ -92,7 +97,21 @@ class Esqueleto extends StatelessWidget {
     final recargar = alRecargar;
 
     return Scaffold(
-      appBar: barraNovaTech(titulo: titulo, etiqueta: etiqueta, alTocarTitulo: alTocarTitulo),
+      appBar: barraNovaTech(
+        titulo: titulo,
+        etiqueta: etiqueta,
+        alTocarTitulo: alTocarTitulo,
+        acciones: [
+          // Con mouse no se puede «jalar para recargar»: en la web hay botón.
+          if (kIsWeb && recargar != null)
+            IconButton(
+              tooltip: 'Actualizar',
+              onPressed: recargar,
+              icon: const Icon(Icons.refresh, color: Colors.white),
+            ),
+          ...?acciones,
+        ],
+      ),
       body: Column(
         children: [
           Expanded(child: recargar == null ? lista : RefreshIndicator(onRefresh: recargar, child: lista)),
@@ -127,14 +146,47 @@ class ShellCliente extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Tocar la pestaña activa vuelve a su pantalla inicial.
+    void ir(int i) => shell.goBranch(i, initialLocation: i == shell.currentIndex);
+
+    // Computador (web): menú lateral azul unido al encabezado, como en la app del personal.
+    if (esEscritorio(context)) {
+      return Scaffold(
+        body: Row(
+          children: [
+            NavigationRail(
+              selectedIndex: shell.currentIndex,
+              onDestinationSelected: ir,
+              labelType: NavigationRailLabelType.all,
+              backgroundColor: ColoresNovaTech.azul,
+              indicatorColor: Colors.white.withValues(alpha: 0.18),
+              selectedIconTheme: const IconThemeData(color: Colors.white),
+              unselectedIconTheme: IconThemeData(color: Colors.white.withValues(alpha: 0.7)),
+              selectedLabelTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12),
+              unselectedLabelTextStyle: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12),
+              leading: const Padding(
+                padding: EdgeInsets.only(top: 14, bottom: 18),
+                child: Tooltip(message: 'NovaTech', child: SimboloNovaTech(tamano: 38)),
+              ),
+              destinations: [
+                for (final p in pestanas)
+                  NavigationRailDestination(icon: Icon(p.icono), selectedIcon: Icon(p.iconoActivo), label: Text(p.etiqueta)),
+              ],
+            ),
+            const VerticalDivider(width: 1, color: ColoresNovaTech.borde),
+            Expanded(child: shell),
+          ],
+        ),
+      );
+    }
+
     return Scaffold(
       body: shell,
       bottomNavigationBar: DecoratedBox(
         decoration: const BoxDecoration(border: Border(top: BorderSide(color: ColoresNovaTech.borde))),
         child: NavigationBar(
           selectedIndex: shell.currentIndex,
-          // Tocar la pestaña activa vuelve a su pantalla inicial.
-          onDestinationSelected: (i) => shell.goBranch(i, initialLocation: i == shell.currentIndex),
+          onDestinationSelected: ir,
           destinations: [
             for (final p in pestanas)
               NavigationDestination(icon: Icon(p.icono), selectedIcon: Icon(p.iconoActivo), label: p.etiqueta),

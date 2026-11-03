@@ -11,6 +11,7 @@ import '../carrito/carrito.dart';
 import '../carrito/widgets_carrito.dart';
 import '../direcciones/api_direcciones.dart';
 import '../direcciones/pantalla_agregar_direccion.dart';
+import '../notificaciones/pantalla_notificaciones.dart';
 import 'api_tienda.dart';
 
 /// Categoría elegida en las píldoras (null = «Todo»). Se conserva al cambiar de pestaña.
@@ -44,6 +45,7 @@ class PantallaTienda extends ConsumerWidget {
     return Esqueleto(
       etiqueta: 'Entregar en',
       accionInferior: hayCarrito ? const BarraCarrito() : null,
+      acciones: const [CampanaNotificaciones(), SizedBox(width: 4)],
       titulo: titulo,
       alTocarTitulo: () => context.push(direccion == null ? '/direcciones/agregar' : '/direcciones'),
       alRecargar: () async {

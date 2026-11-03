@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/api/cliente_api.dart';
 import '../../core/api/modelos.dart';
@@ -9,10 +10,11 @@ import '../../core/widgets/componentes.dart';
 import '../../core/widgets/esqueleto.dart';
 import '../../core/widgets/vista_async.dart';
 import '../carrito/pantalla_carrito.dart';
+import '../carrito/widgets_carrito.dart';
 import 'api_pedidos.dart';
 
 /// Detalle del pedido: en qué va, qué lleva, cuánto se paga al recibir y dónde.
-/// (El mapa en vivo y el QR de entrega se suman en C4.)
+/// Mientras está en curso lleva al mapa de seguimiento y al QR de entrega.
 class PantallaPedido extends ConsumerWidget {
   const PantallaPedido({super.key, required this.pedidoId});
 
@@ -60,7 +62,32 @@ class PantallaPedido extends ConsumerWidget {
           datos: (p) => Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _Estado(pedido: p),
+              RecorridoPedido(pedido: p),
+              if (!p.estado.terminado) ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => context.push('/pedidos/${p.id}/seguimiento'),
+                        icon: const Icon(Icons.map_outlined),
+                        label: const Text('Seguir en el mapa'),
+                      ),
+                    ),
+                    if (p.qrEntrega != null) ...[
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: FilledButton.icon(
+                          style: estiloNaranja(),
+                          onPressed: () => context.push('/pedidos/${p.id}/qr'),
+                          icon: const Icon(Icons.qr_code_2),
+                          label: const Text('QR de entrega'),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 6),
+              ],
               _Productos(pedido: p),
               Card(
                 child: Padding(
@@ -92,8 +119,8 @@ class PantallaPedido extends ConsumerWidget {
 }
 
 /// Recorrido del pedido con puntos: verde lo hecho, azul donde va, gris lo que falta.
-class _Estado extends StatelessWidget {
-  const _Estado({required this.pedido});
+class RecorridoPedido extends StatelessWidget {
+  const RecorridoPedido({super.key, required this.pedido});
 
   final Pedido pedido;
 

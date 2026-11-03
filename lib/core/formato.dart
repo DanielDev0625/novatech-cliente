@@ -89,3 +89,9 @@ String antiguedad(DateTime fecha, {DateTime? ahora}) {
   final dias = horas ~/ 24;
   return dias == 1 ? 'hace 1 día' : 'hace $dias días';
 }
+
+/// «4:48 p. m.» (como en el diseño del seguimiento).
+String horaAmPm(DateTime fecha) {
+  final h = fecha.hour % 12 == 0 ? 12 : fecha.hour % 12;
+  return '$h:${_dos(fecha.minute)} ${fecha.hour < 12 ? 'a. m.' : 'p. m.'}';
+}

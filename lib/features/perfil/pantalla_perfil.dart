@@ -9,7 +9,6 @@ import '../../core/widgets/esqueleto.dart';
 import '../../core/widgets/vista_async.dart';
 
 /// Pestaña «Perfil»: con qué cuenta entró la persona y «Cerrar sesión».
-/// (Las notificaciones se suman en C4.)
 class PantallaPerfil extends ConsumerWidget {
   const PantallaPerfil({super.key});
 
@@ -68,6 +67,14 @@ class PantallaPerfil extends ConsumerWidget {
           title: const Text('Mis direcciones'),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => context.push('/direcciones'),
+        ),
+        const Divider(),
+        ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+          leading: const Icon(Icons.notifications_outlined),
+          title: const Text('Notificaciones'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push('/notificaciones'),
         ),
         const Divider(),
         ListTile(

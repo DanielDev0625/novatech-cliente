@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/api/cliente_api.dart';
 import '../../core/sesion/sesion.dart';
 import '../../core/tema/tema.dart';
+import '../../core/widgets/adaptable.dart';
 import '../../core/widgets/componentes.dart';
 import '../../core/widgets/marca.dart';
 
@@ -56,82 +57,131 @@ class _PantallaAccesoState extends ConsumerState<PantallaAcceso> {
   Widget build(BuildContext context) {
     final mensaje = _error ?? ref.watch(sesionProvider.select((s) => s.aviso));
 
-    return Scaffold(
-      body: Column(
-        children: [
-          SizedBox(height: MediaQuery.paddingOf(context).top),
-          const FranjaColores(ancho: double.infinity, alto: 5),
-          Expanded(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 400),
-                  child: AutofillGroup(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const Center(child: LogoNovaTech.vertical(alto: 120)),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Componentes de PC a tu puerta',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: ColoresNovaTech.textoSuave, fontSize: 15),
-                        ),
-                        const SizedBox(height: 28),
-                        TextField(
-                          controller: _usuario,
-                          enabled: !_cargando,
-                          autocorrect: false,
-                          enableSuggestions: false,
-                          textInputAction: TextInputAction.next,
-                          autofillHints: const [AutofillHints.username],
-                          decoration: const InputDecoration(hintText: 'Usuario', prefixIcon: Icon(Icons.person_outline)),
-                        ),
-                        const SizedBox(height: 12),
-                        CampoContrasena(
-                          controlador: _password,
-                          habilitado: !_cargando,
-                          ocultar: _ocultar,
-                          alAlternar: () => setState(() => _ocultar = !_ocultar),
-                          alEnviar: _entrar,
-                        ),
-                        if (mensaje != null) ...[const SizedBox(height: 12), AvisoError(texto: mensaje)],
-                        const SizedBox(height: 16),
-                        FilledButton(
-                          onPressed: _cargando ? null : _entrar,
-                          child: _cargando ? const CargandoBoton() : const Text('Iniciar sesión'),
-                        ),
-                        const SizedBox(height: 20),
-                        const Text(
-                          '¿Es tu primera compra?',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: ColoresNovaTech.textoSuave),
-                        ),
-                        const SizedBox(height: 8),
-                        OutlinedButton(
-                          onPressed: _cargando ? null : () => context.push('/acceso/registro'),
-                          child: const Text('Crear cuenta'),
-                        ),
-                      ],
-                    ),
+    final formulario = Column(
+      children: [
+        SizedBox(height: MediaQuery.paddingOf(context).top),
+        const FranjaColores(ancho: double.infinity, alto: 5),
+        Expanded(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 400),
+                child: AutofillGroup(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Center(child: LogoNovaTech.vertical(alto: 120)),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Componentes de PC a tu puerta',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: ColoresNovaTech.textoSuave, fontSize: 15),
+                      ),
+                      const SizedBox(height: 28),
+                      TextField(
+                        controller: _usuario,
+                        enabled: !_cargando,
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        textInputAction: TextInputAction.next,
+                        autofillHints: const [AutofillHints.username],
+                        decoration: const InputDecoration(hintText: 'Usuario', prefixIcon: Icon(Icons.person_outline)),
+                      ),
+                      const SizedBox(height: 12),
+                      CampoContrasena(
+                        controlador: _password,
+                        habilitado: !_cargando,
+                        ocultar: _ocultar,
+                        alAlternar: () => setState(() => _ocultar = !_ocultar),
+                        alEnviar: _entrar,
+                      ),
+                      if (mensaje != null) ...[const SizedBox(height: 12), AvisoError(texto: mensaje)],
+                      const SizedBox(height: 16),
+                      FilledButton(
+                        onPressed: _cargando ? null : _entrar,
+                        child: _cargando ? const CargandoBoton() : const Text('Iniciar sesión'),
+                      ),
+                      const SizedBox(height: 20),
+                      const Text(
+                        '¿Es tu primera compra?',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: ColoresNovaTech.textoSuave),
+                      ),
+                      const SizedBox(height: 8),
+                      OutlinedButton(
+                        onPressed: _cargando ? null : () => context.push('/acceso/registro'),
+                        child: const Text('Crear cuenta'),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
           ),
-          SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-              child: Text(
-                'Al continuar aceptas los términos y la política de privacidad',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: ColoresNovaTech.textoSuave.withValues(alpha: 0.85), fontSize: 13),
-              ),
+        ),
+        SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+            child: Text(
+              'Al continuar aceptas los términos y la política de privacidad',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: ColoresNovaTech.textoSuave.withValues(alpha: 0.85), fontSize: 13),
             ),
           ),
-        ],
+        ),
+      ],
+    );
+
+    // En el computador: panel de la marca a la izquierda y el formulario a la derecha.
+    if (esEscritorio(context)) {
+      return Scaffold(
+        body: Row(
+          children: [
+            const Expanded(child: _PanelMarca()),
+            Expanded(child: formulario),
+          ],
+        ),
+      );
+    }
+    return Scaffold(body: formulario);
+  }
+}
+
+class _PanelMarca extends StatelessWidget {
+  const _PanelMarca();
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: ColoresNovaTech.azul,
+      child: Padding(
+        padding: const EdgeInsets.all(48),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const LogoNovaTech.horizontalBlanco(alto: 64),
+            const Spacer(),
+            const Text(
+              'Componentes de PC\na tu puerta',
+              style: TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w700, height: 1.2),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Procesadores, tarjetas gráficas, memoria y más. Pagas contra entrega '
+              'y sigues tu pedido en el mapa hasta que llega.',
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 16, height: 1.4),
+            ),
+            const SizedBox(height: 32),
+            const FranjaColores(ancho: 220, alto: 5),
+            const Spacer(),
+            Text(
+              'Distribuidora de componentes de PC',
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 13),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -189,9 +239,6 @@ class CargandoBoton extends StatelessWidget {
   const CargandoBoton({super.key});
 
   @override
-  Widget build(BuildContext context) => const SizedBox(
-        width: 22,
-        height: 22,
-        child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
-      );
+  Widget build(BuildContext context) =>
+      const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white));
 }

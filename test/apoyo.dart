@@ -40,6 +40,14 @@ class AlmacenFalso extends AlmacenSeguro {
 
   @override
   Future<void> borrarSesion() async => guardada = null;
+
+  final vistas = <int, int>{};
+
+  @override
+  Future<int> ultimaNotificacionVista(int usuarioId) async => vistas[usuarioId] ?? 0;
+
+  @override
+  Future<void> guardarNotificacionVista(int usuarioId, int id) async => vistas[usuarioId] = id;
 }
 
 /// Servidor en memoria: cuentas, direcciones y catálogo.
@@ -125,7 +133,53 @@ class ApiFalsa extends ClienteApi {
       'qr_entrega': 'qr-$id',
     };
     pedidos.add(pedido);
+    _avisar(pedido, 'registrado');
     return pedido;
+  }
+
+  int _evento = 0;
+  final notificaciones = <Map<String, dynamic>>[];
+
+  /// Como si el personal moviera el pedido: cambia el estado y deja el aviso.
+  void avanzar(int pedidoId, String estado, {double? latTransportista, double? lngTransportista, int? eta}) {
+    final p = pedidos.firstWhere((p) => p['id'] == pedidoId);
+    p['estado'] = estado;
+    if (estado == 'entregado' || estado == 'cancelado') p['qr_entrega'] = null;
+    (p['eventos'] as List).add({'estado': estado, 'por': 'operario', 'fecha': DateTime.now().toIso8601String()});
+    _avisar(p, estado);
+    seguimientos[pedidoId] = {
+      'pedido_id': pedidoId,
+      'codigo': p['codigo'],
+      'estado': estado,
+      'destino_latitud': 10.99,
+      'destino_longitud': -74.8,
+      'transportista_posicion': latTransportista == null
+          ? null
+          : {'latitud': latTransportista, 'longitud': lngTransportista, 'segundos_desde_actualizacion': 10},
+      'parada': eta == null ? null : 2,
+      'eta_minutos': eta,
+    };
+  }
+
+  final seguimientos = <int, Map<String, dynamic>>{};
+
+  void _avisar(Map<String, dynamic> p, String estado) {
+    const titulos = {
+      'registrado': 'Recibimos tu pedido',
+      'alistando': 'Estamos alistando tu pedido',
+      'en_ruta': 'Tu pedido va en camino',
+      'entregado': 'Pedido entregado',
+      'cancelado': 'Pedido cancelado',
+    };
+    notificaciones.insert(0, {
+      'id': ++_evento,
+      'pedido_id': p['id'],
+      'codigo': p['codigo'],
+      'estado': estado,
+      'titulo': titulos[estado] ?? 'Tu pedido cambió',
+      'texto': 'Detalle',
+      'fecha': DateTime.now().toIso8601String(),
+    });
   }
 
   Map<String, dynamic> _resumen(Map<String, dynamic> p) => {
@@ -148,6 +202,18 @@ class ApiFalsa extends ClienteApi {
         '/catalogo' => [for (final p in catalogo) if ((p['stock'] as int) > 0) p],
         '/pedidos/condiciones' => {'costo_envio': costoEnvio, 'plazo_entrega_dias': 2, 'metodo_pago': 'contra_entrega'},
         '/pedidos/mios' => [for (final p in pedidos.reversed) _resumen(p)],
+        '/notificaciones' => notificaciones,
+        _ when ruta.endsWith('/seguimiento') => seguimientos[int.parse(ruta.split('/')[2])] ??
+            {
+              'pedido_id': int.parse(ruta.split('/')[2]),
+              'codigo': 'PED',
+              'estado': pedidos.firstWhere((p) => p['id'] == int.parse(ruta.split('/')[2]))['estado'],
+              'destino_latitud': 10.99,
+              'destino_longitud': -74.8,
+              'transportista_posicion': null,
+              'parada': null,
+              'eta_minutos': null,
+            },
         _ when ruta.startsWith('/pedidos/') => pedidos.firstWhere((p) => p['id'] == int.parse(ruta.split('/')[2])),
         _ => throw ErrorApi('Ruta no simulada: $ruta'),
       };
@@ -163,6 +229,7 @@ class ApiFalsa extends ClienteApi {
         prod['stock'] = (prod['stock'] as int) + (l['cantidad'] as int);
       }
       p['estado'] = 'cancelado';
+      _avisar(p, 'cancelado');
       return p;
     }
     if (ruta != '/direcciones') throw ErrorApi('Ruta no simulada: $ruta');

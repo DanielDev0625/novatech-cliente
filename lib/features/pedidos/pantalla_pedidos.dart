@@ -8,6 +8,7 @@ import '../../core/tema/tema.dart';
 import '../../core/widgets/componentes.dart';
 import '../../core/widgets/esqueleto.dart';
 import '../../core/widgets/vista_async.dart';
+import '../notificaciones/pantalla_notificaciones.dart';
 import 'api_pedidos.dart';
 
 /// Pestaña elegida: true = «En curso», false = «Anteriores».
@@ -24,6 +25,7 @@ class PantallaPedidos extends ConsumerWidget {
 
     return Esqueleto(
       titulo: 'Mis pedidos',
+      acciones: const [CampanaNotificaciones(), SizedBox(width: 4)],
       alRecargar: () => ref.refresh(misPedidosProvider.future),
       hijos: [
         Row(
@@ -77,7 +79,9 @@ class TarjetaPedido extends StatelessWidget {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () => context.push('/pedidos/${p.id}'),
+        onTap: () => context.push(
+          p.estado == EstadoPedido.enRuta ? '/pedidos/${p.id}/seguimiento' : '/pedidos/${p.id}',
+        ),
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Column(
@@ -97,7 +101,10 @@ class TarjetaPedido extends StatelessWidget {
               Row(
                 children: [
                   Expanded(child: Text(pesos(p.totalAPagar), style: const TextStyle(fontWeight: FontWeight.w600))),
-                  const Text('Ver', style: TextStyle(color: ColoresNovaTech.azul, fontWeight: FontWeight.w600)),
+                  Text(
+                    p.estado == EstadoPedido.enRuta ? 'Seguir' : 'Ver',
+                    style: const TextStyle(color: ColoresNovaTech.azul, fontWeight: FontWeight.w600),
+                  ),
                   const Icon(Icons.chevron_right, color: ColoresNovaTech.azul, size: 20),
                 ],
               ),

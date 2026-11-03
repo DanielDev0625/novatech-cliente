@@ -6,6 +6,7 @@ import '../../core/api/modelos.dart';
 import '../../core/sesion/sesion.dart';
 import '../../core/tema/tema.dart';
 import '../carrito/carrito.dart';
+import '../notificaciones/api_notificaciones.dart';
 import '../tienda/api_tienda.dart';
 
 /// Envío y plazo vigentes (los configura el administrador).
@@ -48,6 +49,7 @@ class AccionesPedidos {
       final pedido = Pedido.fromJson(Map<String, dynamic>.from(datos as Map));
       _ref.read(carritoProvider.notifier).vaciar();
       _ref.invalidate(misPedidosProvider);
+      _ref.invalidate(notificacionesProvider);
       _ref.invalidate(catalogoProvider);
       return pedido;
     } on ErrorApi catch (e) {
@@ -66,6 +68,7 @@ class AccionesPedidos {
     _ref.invalidate(misPedidosProvider);
     _ref.invalidate(pedidoProvider(pedidoId));
     _ref.invalidate(catalogoProvider);
+    _ref.invalidate(notificacionesProvider);
   }
 }
 
