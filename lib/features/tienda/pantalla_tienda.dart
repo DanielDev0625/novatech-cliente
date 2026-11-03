@@ -7,6 +7,8 @@ import '../../core/formato.dart';
 import '../../core/tema/tema.dart';
 import '../../core/widgets/esqueleto.dart';
 import '../../core/widgets/vista_async.dart';
+import '../carrito/carrito.dart';
+import '../carrito/widgets_carrito.dart';
 import '../direcciones/api_direcciones.dart';
 import '../direcciones/pantalla_agregar_direccion.dart';
 import 'api_tienda.dart';
@@ -32,8 +34,16 @@ class PantallaTienda extends ConsumerWidget {
       _ => '…',
     };
 
+    // Precios y stock del carrito al día con el catálogo que se acaba de traer.
+    ref.listen(catalogoProvider, (_, nuevo) {
+      final lista = nuevo.valueOrNull;
+      if (lista != null) ref.read(carritoProvider.notifier).actualizarCon(lista);
+    });
+    final hayCarrito = ref.watch(unidadesCarritoProvider) > 0;
+
     return Esqueleto(
       etiqueta: 'Entregar en',
+      accionInferior: hayCarrito ? const BarraCarrito() : null,
       titulo: titulo,
       alTocarTitulo: () => context.push(direccion == null ? '/direcciones/agregar' : '/direcciones'),
       alRecargar: () async {
@@ -71,7 +81,7 @@ class PantallaTienda extends ConsumerWidget {
                   physics: const NeverScrollableScrollPhysics(),
                   gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                     maxCrossAxisExtent: 230,
-                    mainAxisExtent: 196,
+                    mainAxisExtent: 238,
                     crossAxisSpacing: 10,
                     mainAxisSpacing: 10,
                   ),
@@ -155,6 +165,8 @@ class TarjetaProducto extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
+              const SizedBox(height: 8),
+              AgregarProducto(producto: p),
             ],
           ),
         ),

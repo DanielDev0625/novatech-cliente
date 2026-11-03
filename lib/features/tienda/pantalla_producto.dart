@@ -1,5 +1,8 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/api/modelos.dart';
 import '../../core/formato.dart';
@@ -7,22 +10,72 @@ import '../../core/tema/tema.dart';
 import '../../core/widgets/componentes.dart';
 import '../../core/widgets/esqueleto.dart';
 import '../../core/widgets/vista_async.dart';
+import '../carrito/carrito.dart';
+import '../carrito/widgets_carrito.dart';
 import 'api_tienda.dart';
 
 /// Detalle de un producto: categoría, marca, precio y unidades disponibles.
-/// (El botón «Agregar al carrito» llega con el carrito, en la fase C3.)
-class PantallaProducto extends ConsumerWidget {
+/// Abajo se elige la cantidad y se agrega al carrito.
+class PantallaProducto extends ConsumerStatefulWidget {
   const PantallaProducto({super.key, required this.productoId});
 
   final int productoId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PantallaProducto> createState() => _PantallaProductoState();
+}
+
+class _PantallaProductoState extends ConsumerState<PantallaProducto> {
+  /// Cantidad elegida; empieza en lo que ya hay en el carrito (o 1).
+  late int _cantidad = math.max(1, ref.read(carritoProvider.notifier).cantidadDe(widget.productoId));
+
+  void _agregar(Producto producto) {
+    final yaEstaba = ref.read(carritoProvider.notifier).cantidadDe(producto.id) > 0;
+    ref.read(carritoProvider.notifier).poner(producto, _cantidad);
+    mostrarMensaje(context, yaEstaba ? 'Carrito actualizado' : 'Agregado al carrito');
+    context.pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final productoId = widget.productoId;
     final catalogo = ref.watch(catalogoProvider);
     final producto = catalogo.valueOrNull?.where((p) => p.id == productoId).firstOrNull;
+    final enCarrito = ref.watch(carritoProvider.select(
+      (items) => items.any((i) => i.producto.id == productoId),
+    ));
+    final cantidad = producto == null ? _cantidad : _cantidad.clamp(1, producto.stock);
 
     return Esqueleto(
       titulo: producto?.categoria ?? 'Producto',
+      accionInferior: producto == null
+          ? null
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    const Expanded(child: Text('Cantidad', style: TextStyle(fontSize: 15))),
+                    ContadorCompacto(
+                      cantidad: cantidad,
+                      alRestar: cantidad > 1 ? () => setState(() => _cantidad = cantidad - 1) : null,
+                      alSumar: cantidad < producto.stock ? () => setState(() => _cantidad = cantidad + 1) : null,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                FilledButton(
+                  style: estiloNaranja(),
+                  onPressed: () {
+                    _cantidad = cantidad;
+                    _agregar(producto);
+                  },
+                  child: Text(
+                    '${enCarrito ? 'Actualizar carrito' : 'Agregar al carrito'} · ${pesos(producto.precio * cantidad)}',
+                  ),
+                ),
+              ],
+            ),
       alRecargar: () => ref.refresh(catalogoProvider.future),
       hijos: [
         VistaAsync<List<Producto>>(
@@ -81,6 +134,7 @@ class _Detalle extends StatelessWidget {
                 if (p.marca != null && p.marca!.isNotEmpty) _Fila(etiqueta: 'Marca', valor: p.marca!),
                 _Fila(etiqueta: 'Categoría', valor: p.categoria),
                 const _Fila(etiqueta: 'Entrega', valor: 'A domicilio, a tu dirección principal'),
+                const _Fila(etiqueta: 'Pago', valor: '$textoPago · $detallePago'),
               ],
             ),
           ),

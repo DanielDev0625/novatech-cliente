@@ -4,9 +4,12 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/acceso/pantalla_acceso.dart';
 import '../../features/acceso/pantalla_registro.dart';
+import '../../features/carrito/pantalla_carrito.dart';
+import '../../features/carrito/pantalla_confirmar.dart';
 import '../../features/direcciones/pantalla_agregar_direccion.dart';
 import '../../features/direcciones/pantalla_direcciones.dart';
-import '../../features/inicio/pantallas_inicio.dart';
+import '../../features/pedidos/pantalla_pedido.dart';
+import '../../features/pedidos/pantalla_pedidos.dart';
 import '../../features/perfil/pantalla_perfil.dart';
 import '../../features/tienda/pantalla_producto.dart';
 import '../../features/tienda/pantalla_tienda.dart';
@@ -36,6 +39,8 @@ String? redireccionPorSesion(EstadoSesion sesion, String ruta) {
 
 GoRoute _ruta(String path, Widget pantalla) => GoRoute(path: path, builder: (c, e) => pantalla);
 
+int _id(GoRouterState estado) => int.tryParse(estado.pathParameters['id'] ?? '') ?? -1;
+
 final routerProvider = Provider<GoRouter>((ref) {
   final refresco = _RefrescoPorSesion(ref);
   ref.onDispose(refresco.dispose);
@@ -54,7 +59,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       _ruta('/direcciones/agregar', const PantallaAgregarDireccion()),
       GoRoute(
         path: '/tienda/producto/:id',
-        builder: (c, e) => PantallaProducto(productoId: int.tryParse(e.pathParameters['id']!) ?? -1),
+        builder: (c, e) => PantallaProducto(productoId: _id(e)),
+      ),
+      _ruta('/carrito', const PantallaCarrito()),
+      _ruta('/carrito/confirmar', const PantallaConfirmar()),
+      GoRoute(
+        path: '/pedidos/:id',
+        builder: (c, e) => PantallaPedido(pedidoId: _id(e)),
       ),
 
       // ---- Pestañas del cliente ----

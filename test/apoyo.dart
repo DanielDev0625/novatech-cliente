@@ -74,6 +74,65 @@ class ApiFalsa extends ClienteApi {
     });
   }
 
+  /// Pedidos guardados (como los devuelve el servidor) y envío vigente.
+  final pedidos = <Map<String, dynamic>>[];
+  double costoEnvio = 8000;
+
+  Map<String, dynamic> _producto(int id) => catalogo.firstWhere((p) => p['id'] == id);
+
+  Map<String, dynamic> _crearPedido(Map<String, dynamic> datos) {
+    final items = (datos['items'] as List).cast<Map<String, dynamic>>();
+    for (final i in items) {
+      final p = _producto(i['producto_id'] as int);
+      if ((p['stock'] as int) < (i['cantidad'] as int)) {
+        throw ErrorApi('Stock insuficiente de «${p['nombre']}»', 409);
+      }
+    }
+    var total = 0.0;
+    final lineas = <Map<String, dynamic>>[];
+    for (final i in items) {
+      final p = _producto(i['producto_id'] as int);
+      final cantidad = i['cantidad'] as int;
+      p['stock'] = (p['stock'] as int) - cantidad; // reserva
+      final subtotal = (p['precio'] as num) * cantidad;
+      total += subtotal;
+      lineas.add({
+        'producto_id': p['id'],
+        'sku': p['sku'],
+        'nombre': p['nombre'],
+        'cantidad': cantidad,
+        'precio_unitario': p['precio'],
+        'subtotal': subtotal,
+      });
+    }
+    final id = pedidos.length + 1;
+    final pedido = <String, dynamic>{
+      'id': id,
+      'codigo': 'PED-2026-${id.toString().padLeft(4, '0')}',
+      'estado': 'registrado',
+      'cliente': null,
+      'total': total,
+      'costo_envio': costoEnvio,
+      'total_a_pagar': total + costoEnvio,
+      'metodo_pago': 'contra_entrega',
+      'fecha_prometida': DateTime.now().add(const Duration(days: 2)).toIso8601String(),
+      'creado_en': DateTime.now().toIso8601String(),
+      'direccion': direcciones.firstWhere((d) => d['id'] == datos['direccion_id']),
+      'lineas': lineas,
+      'eventos': [
+        {'estado': 'registrado', 'por': 'usuario', 'fecha': DateTime.now().toIso8601String()},
+      ],
+      'qr_entrega': 'qr-$id',
+    };
+    pedidos.add(pedido);
+    return pedido;
+  }
+
+  Map<String, dynamic> _resumen(Map<String, dynamic> p) => {
+        ...p,
+        'unidades': (p['lineas'] as List).fold<int>(0, (s, l) => s + (l['cantidad'] as int)),
+      };
+
   List<Map<String, dynamic>> _ordenadas() =>
       [...direcciones]..sort((a, b) => (b['principal'] ? 1 : 0) - (a['principal'] ? 1 : 0));
 
@@ -86,12 +145,26 @@ class ApiFalsa extends ClienteApi {
   @override
   Future<dynamic> get(String ruta, {Map<String, dynamic>? parametros}) async => switch (ruta) {
         '/direcciones' => _ordenadas(),
-        '/catalogo' => catalogo,
+        '/catalogo' => [for (final p in catalogo) if ((p['stock'] as int) > 0) p],
+        '/pedidos/condiciones' => {'costo_envio': costoEnvio, 'plazo_entrega_dias': 2, 'metodo_pago': 'contra_entrega'},
+        '/pedidos/mios' => [for (final p in pedidos.reversed) _resumen(p)],
+        _ when ruta.startsWith('/pedidos/') => pedidos.firstWhere((p) => p['id'] == int.parse(ruta.split('/')[2])),
         _ => throw ErrorApi('Ruta no simulada: $ruta'),
       };
 
   @override
   Future<dynamic> post(String ruta, {Object? datos, Map<String, dynamic>? parametros}) async {
+    if (ruta == '/pedidos') return _crearPedido(datos! as Map<String, dynamic>);
+    if (ruta.startsWith('/pedidos/') && ruta.endsWith('/cancelar')) {
+      final p = pedidos.firstWhere((p) => p['id'] == int.parse(ruta.split('/')[2]));
+      if (p['estado'] != 'registrado') throw ErrorApi('Ya no se puede cancelar', 409);
+      for (final l in p['lineas'] as List) {
+        final prod = _producto(l['producto_id'] as int);
+        prod['stock'] = (prod['stock'] as int) + (l['cantidad'] as int);
+      }
+      p['estado'] = 'cancelado';
+      return p;
+    }
     if (ruta != '/direcciones') throw ErrorApi('Ruta no simulada: $ruta');
     final d = datos! as Map<String, dynamic>;
     agregarDireccion(d['etiqueta'] as String, d['texto'] as String, principal: d['principal'] as bool);
