@@ -1,64 +1,11 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:novatech_cliente/core/api/cliente_api.dart';
 import 'package:novatech_cliente/core/api/modelos.dart';
 import 'package:novatech_cliente/core/rutas/rutas.dart';
-import 'package:novatech_cliente/core/sesion/almacen_seguro.dart';
 import 'package:novatech_cliente/core/sesion/sesion.dart';
 import 'package:novatech_cliente/features/acceso/pantalla_registro.dart';
-import 'package:novatech_cliente/main.dart';
 
-/// Token con vencimiento (la firma no importa: la revisa el servidor).
-String tokenDePrueba({Duration dura = const Duration(days: 30)}) {
-  String parte(Map<String, dynamic> m) => base64Url.encode(utf8.encode(jsonEncode(m))).replaceAll('=', '');
-  final exp = DateTime.now().add(dura).millisecondsSinceEpoch ~/ 1000;
-  return '${parte({'alg': 'HS256'})}.${parte({'sub': '7', 'rol': 'usuario', 'exp': exp})}.firma';
-}
-
-Map<String, dynamic> usuarioJson({String usuario = 'camila.t', String rol = 'usuario', String nombre = 'Camila Torres'}) =>
-    {'id': 7, 'nombre': nombre, 'usuario': usuario, 'rol': rol, 'activo': true};
-
-class AlmacenFalso extends AlmacenSeguro {
-  (String, Usuario)? guardada;
-
-  @override
-  Future<void> guardarSesion(String token, Usuario usuario) async => guardada = (token, usuario);
-
-  @override
-  Future<(String, Usuario)?> leerSesion() async => guardada;
-
-  @override
-  Future<void> borrarSesion() async => guardada = null;
-}
-
-class ApiFalsa extends ClienteApi {
-  final cuentas = <String, String>{'camila.t': 'clave1234'};
-  final registros = <String>[];
-  String rol = 'usuario';
-
-  @override
-  Future<void> despertar() async {}
-
-  @override
-  Future<Usuario> perfil() async => Usuario.fromJson(usuarioJson());
-
-  @override
-  Future<Map<String, dynamic>> iniciarSesion(String usuario, String password) async {
-    if (cuentas[usuario] != password) throw ErrorApi('Usuario o contraseña incorrectos', 401);
-    return {'access_token': tokenDePrueba(), 'usuario': usuarioJson(usuario: usuario, rol: rol)};
-  }
-
-  @override
-  Future<Map<String, dynamic>> registrarse(String nombre, String usuario, String password) async {
-    if (cuentas.containsKey(usuario)) throw ErrorApi('Ese usuario ya existe', 409);
-    cuentas[usuario] = password;
-    registros.add('$nombre|$usuario');
-    return {'access_token': tokenDePrueba(), 'usuario': usuarioJson(usuario: usuario, nombre: nombre)};
-  }
-}
+import 'apoyo.dart';
 
 void main() {
   group('Validación del registro', () {
@@ -104,13 +51,7 @@ void main() {
     late ApiFalsa api;
     late AlmacenFalso almacen;
 
-    Widget app() => ProviderScope(
-          overrides: [
-            clienteApiProvider.overrideWithValue(api),
-            almacenSeguroProvider.overrideWithValue(almacen),
-          ],
-          child: const NovaTechCliente(),
-        );
+    Widget app() => appDePrueba(api, almacen);
 
     Future<void> escribir(WidgetTester tester, String pista, String texto) =>
         tester.enterText(find.widgetWithText(TextField, pista), texto);

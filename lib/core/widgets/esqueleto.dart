@@ -9,7 +9,19 @@ import 'marca.dart';
 
 /// Barra superior de la app del cliente: azul con las franjas de la marca debajo.
 /// Con [etiqueta] muestra dos líneas (p. ej. «Entregar en» / «Casa · Cra 43 #84-20»), como en el diseño.
-PreferredSizeWidget barraNovaTech({required String titulo, String? etiqueta, List<Widget>? acciones}) {
+/// Con [alTocarTitulo] el título lleva una flecha ⌄ y se puede tocar (p. ej. para cambiar la dirección).
+PreferredSizeWidget barraNovaTech({
+  required String titulo,
+  String? etiqueta,
+  List<Widget>? acciones,
+  VoidCallback? alTocarTitulo,
+}) {
+  final textoTitulo = Text(
+    titulo,
+    maxLines: 1,
+    overflow: TextOverflow.ellipsis,
+    style: TextStyle(fontSize: etiqueta != null ? 20 : 18, fontWeight: FontWeight.w600, color: Colors.white),
+  );
   return AppBar(
     toolbarHeight: etiqueta != null ? 64.0 : kToolbarHeight,
     titleSpacing: etiqueta != null ? 20 : null,
@@ -19,10 +31,20 @@ PreferredSizeWidget barraNovaTech({required String titulo, String? etiqueta, Lis
       children: [
         if (etiqueta != null)
           Text(etiqueta, style: const TextStyle(fontSize: 13, color: Colors.white70, fontWeight: FontWeight.w400)),
-        Text(
-          titulo,
-          style: TextStyle(fontSize: etiqueta != null ? 20 : 18, fontWeight: FontWeight.w600, color: Colors.white),
-        ),
+        if (alTocarTitulo == null)
+          textoTitulo
+        else
+          InkWell(
+            onTap: alTocarTitulo,
+            borderRadius: BorderRadius.circular(6),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(child: textoTitulo),
+                const Icon(Icons.keyboard_arrow_down, color: Colors.white),
+              ],
+            ),
+          ),
       ],
     ),
     actions: acciones,
@@ -42,6 +64,7 @@ class Esqueleto extends StatelessWidget {
     this.etiqueta,
     this.alRecargar,
     this.accionInferior,
+    this.alTocarTitulo,
   });
 
   final String titulo;
@@ -51,6 +74,8 @@ class Esqueleto extends StatelessWidget {
 
   /// Botón grande fijo abajo (p. ej. «Cerrar sesión»).
   final Widget? accionInferior;
+
+  final VoidCallback? alTocarTitulo;
 
   @override
   Widget build(BuildContext context) {
@@ -67,7 +92,7 @@ class Esqueleto extends StatelessWidget {
     final recargar = alRecargar;
 
     return Scaffold(
-      appBar: barraNovaTech(titulo: titulo, etiqueta: etiqueta),
+      appBar: barraNovaTech(titulo: titulo, etiqueta: etiqueta, alTocarTitulo: alTocarTitulo),
       body: Column(
         children: [
           Expanded(child: recargar == null ? lista : RefreshIndicator(onRefresh: recargar, child: lista)),

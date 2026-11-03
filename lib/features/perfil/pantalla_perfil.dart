@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/sesion/sesion.dart';
 import '../../core/tema/tema.dart';
@@ -7,7 +9,7 @@ import '../../core/widgets/esqueleto.dart';
 import '../../core/widgets/vista_async.dart';
 
 /// Pestaña «Perfil»: con qué cuenta entró la persona y «Cerrar sesión».
-/// (Direcciones y notificaciones se suman en C2 y C4.)
+/// (Las notificaciones se suman en C4.)
 class PantallaPerfil extends ConsumerWidget {
   const PantallaPerfil({super.key});
 
@@ -59,7 +61,25 @@ class PantallaPerfil extends ConsumerWidget {
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
+        ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+          leading: const Icon(Icons.place_outlined),
+          title: const Text('Mis direcciones'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push('/direcciones'),
+        ),
+        const Divider(),
+        ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+          leading: const Icon(Icons.shield_outlined),
+          title: const Text('Permisos: ubicación'),
+          trailing: const Icon(Icons.chevron_right),
+          // Abre los ajustes de la app en el celular para darlo o quitarlo.
+          onTap: Geolocator.openAppSettings,
+        ),
+        const Divider(),
+        const SizedBox(height: 8),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 4),
           child: Text(

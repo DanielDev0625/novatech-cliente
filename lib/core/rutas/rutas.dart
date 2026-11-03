@@ -4,8 +4,12 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/acceso/pantalla_acceso.dart';
 import '../../features/acceso/pantalla_registro.dart';
+import '../../features/direcciones/pantalla_agregar_direccion.dart';
+import '../../features/direcciones/pantalla_direcciones.dart';
 import '../../features/inicio/pantallas_inicio.dart';
 import '../../features/perfil/pantalla_perfil.dart';
+import '../../features/tienda/pantalla_producto.dart';
+import '../../features/tienda/pantalla_tienda.dart';
 import '../sesion/sesion.dart';
 import '../widgets/esqueleto.dart';
 import '../widgets/pantalla_cargando.dart';
@@ -44,6 +48,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       _ruta('/cargando', const PantallaCargando()),
       _ruta('/acceso', const PantallaAcceso()),
       _ruta('/acceso/registro', const PantallaRegistro()),
+
+      // ---- Pantallas que se abren encima de las pestañas (sin navegación inferior) ----
+      _ruta('/direcciones', const PantallaDirecciones()),
+      _ruta('/direcciones/agregar', const PantallaAgregarDireccion()),
+      GoRoute(
+        path: '/tienda/producto/:id',
+        builder: (c, e) => PantallaProducto(productoId: int.tryParse(e.pathParameters['id']!) ?? -1),
+      ),
 
       // ---- Pestañas del cliente ----
       StatefulShellRoute.indexedStack(

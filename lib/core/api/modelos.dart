@@ -46,3 +46,89 @@ class Usuario {
         'activo': activo,
       };
 }
+
+/// Tipo de dirección (los mismos valores que acepta el backend).
+enum EtiquetaDireccion {
+  casa('Casa'),
+  oficina('Oficina'),
+  otra('Otra');
+
+  const EtiquetaDireccion(this.texto);
+  final String texto;
+
+  static EtiquetaDireccion desde(String? valor) =>
+      values.firstWhere((e) => e.name == valor, orElse: () => EtiquetaDireccion.otra);
+}
+
+/// Dirección de entrega guardada por el cliente.
+class Direccion {
+  const Direccion({
+    required this.id,
+    required this.etiqueta,
+    required this.texto,
+    required this.latitud,
+    required this.longitud,
+    required this.indicaciones,
+    required this.principal,
+  });
+
+  final int id;
+  final EtiquetaDireccion etiqueta;
+
+  /// «Cra 43 #84-20, Barranquilla».
+  final String texto;
+  final double latitud;
+  final double longitud;
+
+  /// Apartamento, portería… (opcional).
+  final String? indicaciones;
+
+  /// Los pedidos usan la dirección principal.
+  final bool principal;
+
+  /// «Cra 43 #84-20» (sin la ciudad), para encabezados cortos.
+  String get textoCorto => texto.split(',').first.trim();
+
+  factory Direccion.fromJson(Map<String, dynamic> json) => Direccion(
+        id: json['id'] as int,
+        etiqueta: EtiquetaDireccion.desde(json['etiqueta'] as String?),
+        texto: json['texto'] as String,
+        latitud: (json['latitud'] as num).toDouble(),
+        longitud: (json['longitud'] as num).toDouble(),
+        indicaciones: json['indicaciones'] as String?,
+        principal: json['principal'] as bool? ?? false,
+      );
+}
+
+/// Producto tal como lo ve el cliente: sin costos y solo si tiene stock.
+class Producto {
+  const Producto({
+    required this.id,
+    required this.sku,
+    required this.nombre,
+    required this.marca,
+    required this.categoria,
+    required this.precio,
+    required this.stock,
+  });
+
+  final int id;
+  final String sku;
+  final String nombre;
+  final String? marca;
+  final String categoria;
+  final double precio;
+
+  /// Unidades disponibles.
+  final int stock;
+
+  factory Producto.fromJson(Map<String, dynamic> json) => Producto(
+        id: json['id'] as int,
+        sku: json['sku'] as String,
+        nombre: json['nombre'] as String,
+        marca: json['marca'] as String?,
+        categoria: json['categoria'] as String,
+        precio: (json['precio'] as num).toDouble(),
+        stock: json['stock'] as int? ?? 0,
+      );
+}

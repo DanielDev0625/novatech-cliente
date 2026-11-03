@@ -156,6 +156,14 @@ class ClienteApi {
     }
   }
 
+  Future<void> delete(String ruta) async {
+    try {
+      await _dio.delete(ruta);
+    } on DioException catch (e) {
+      throw errorDesde(e);
+    }
+  }
+
   // ---- Sesión del cliente (C1): cuenta propia con usuario y contraseña ----
 
   Future<Map<String, dynamic>> _postSinSesion(String ruta, Map<String, dynamic> datos) async {
